@@ -25,7 +25,7 @@ where
     NbrT: Copy,
     DataT: Copy,
 {
-    pub fn new(capacity: usize, max_nbrs: usize, data_dim: usize) -> Self {
+    pub fn new(max_nbrs: usize, data_dim: usize, capacity: usize) -> Self {
         let node_size = Self::node_size(max_nbrs, data_dim);
         Self {
             n_nodes: 0,
@@ -145,12 +145,16 @@ where
         return new_id;
     }
 
+    pub fn len(&self) -> usize {
+        return self.n_nodes;
+    }
+
     pub fn max_nbrs(&self) -> usize {
         return self.max_nbrs;
     }
 
-    pub fn len(&self) -> usize {
-        return self.n_nodes;
+    pub fn data_dim(&self) -> usize {
+        return self.data_dim;
     }
 }
 

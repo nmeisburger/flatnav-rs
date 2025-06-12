@@ -5,4 +5,4 @@ mod storage;
 
 pub use distance::EuclideanDistance;
 
-pub type Index = index::Index<u32, f32, distance::EuclideanDistance>;
+pub type IndexEuclideanF32 = index::Index<u32, f32, distance::EuclideanDistance>;

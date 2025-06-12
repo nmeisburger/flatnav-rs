@@ -29,17 +29,8 @@ where
     DataT: num_traits::Num + Copy,
     DistanceFn: Distance<DataT>,
 {
-    pub fn new(max_nbrs: usize, data_dim: usize, distance_fn: DistanceFn) -> Self {
-        Self::with_capacity(max_nbrs, data_dim, distance_fn, 0)
-    }
-
-    pub fn with_capacity(
-        max_nbrs: usize,
-        data_dim: usize,
-        distance_fn: DistanceFn,
-        capacity: usize,
-    ) -> Self {
-        let graph = InMemStorage::<NbrT, DataT>::new(capacity, max_nbrs, data_dim);
+    pub fn new(max_nbrs: usize, data_dim: usize, capacity: usize, distance_fn: DistanceFn) -> Self {
+        let graph = InMemStorage::<NbrT, DataT>::new(max_nbrs, data_dim, capacity);
         Self { graph, distance_fn }
     }
 
@@ -221,6 +212,14 @@ where
 
         return output;
     }
+
+    pub fn len(&self) -> usize {
+        self.graph.len()
+    }
+
+    pub fn data_dim(&self) -> usize {
+        self.graph.data_dim()
+    }
 }
 
 #[cfg(test)]
@@ -247,11 +246,11 @@ mod tests {
             })
             .collect();
 
-        let mut index = Index::<u32, f32, EuclideanDistance>::with_capacity(
+        let mut index = Index::<u32, f32, EuclideanDistance>::new(
             MAX_NBRS,
             DATA_DIM,
-            EuclideanDistance,
             N_VECS,
+            EuclideanDistance,
         );
 
         for (idx, (data, _)) in dataset.iter().enumerate() {
