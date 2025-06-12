@@ -134,9 +134,12 @@ where
             );
         }
 
-        self.data.resize(self.data.len() + self.node_size, 0);
         let new_id = self.n_nodes;
         self.n_nodes = self.n_nodes + 1;
+
+        if self.data.len() <= self.n_nodes * self.node_size {
+            self.data.resize(self.n_nodes * self.node_size, 0);
+        }
 
         self.set_label(new_id, label);
         self.nbrs_mut(new_id).copy_from_slice(nbrs);
@@ -172,7 +175,7 @@ mod tests {
 
     #[test]
     fn test_storage_basic() {
-        let mut storage = InMemStorage::<u32, u8>::new(2, 4, 3);
+        let mut storage = InMemStorage::<u32, u8>::new(4, 3, 2);
 
         assert_eq!(storage.len(), 0);
 
@@ -202,7 +205,7 @@ mod tests {
     fn test_storage_large() {
         const MAX_NBRS: usize = 3;
         const DATA_DIM: usize = 5;
-        let mut storage = InMemStorage::<u8, i8>::new(100, MAX_NBRS, DATA_DIM);
+        let mut storage = InMemStorage::<u8, i8>::new(MAX_NBRS, DATA_DIM, 100);
 
         for i in 0..200 {
             let label = i * 11;
