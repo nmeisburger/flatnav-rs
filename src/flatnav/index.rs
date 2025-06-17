@@ -1,5 +1,6 @@
 use super::distance::Distance;
 use super::priority_queue::{Closest, ClosestQueue, Furthest, FurthestQueue};
+use super::reordering::Reordering;
 use super::storage::InMemStorage;
 use std::collections::{BinaryHeap, HashSet};
 
@@ -211,6 +212,23 @@ where
         }
 
         return output;
+    }
+
+    pub fn reorder(&mut self, reordering: &dyn Reordering) {
+        let out_nodes = (0..self.len())
+            .map(|node| {
+                self.graph
+                    .nbrs(node)
+                    .iter()
+                    .filter(|&&nbr| nbr != NbrT::max_value())
+                    .map(|nbr| nbr.as_())
+                    .collect::<Vec<_>>()
+            })
+            .collect();
+
+        let perm = reordering.reorder(&out_nodes);
+
+        self.graph.reorder(perm);
     }
 
     pub fn len(&self) -> usize {

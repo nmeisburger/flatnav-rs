@@ -1,4 +1,4 @@
-use std::marker::PhantomData;
+use std::{marker::PhantomData, ptr};
 
 pub type LabelT = u64;
 
@@ -6,7 +6,7 @@ pub type LabelT = u64;
 // [Label 1][Neighbors 1][Data 1][Label 2][Neighbors 2][Data 2]...
 pub struct InMemStorage<NbrT, DataT>
 where
-    NbrT: Copy,
+    NbrT: Copy + num_traits::AsPrimitive<usize> + num_traits::FromPrimitive,
     DataT: Copy,
 {
     n_nodes: usize,
@@ -22,7 +22,7 @@ where
 
 impl<NbrT, DataT> InMemStorage<NbrT, DataT>
 where
-    NbrT: Copy,
+    NbrT: Copy + num_traits::AsPrimitive<usize> + num_traits::FromPrimitive,
     DataT: Copy,
 {
     pub fn new(max_nbrs: usize, data_dim: usize, capacity: usize) -> Self {
@@ -158,6 +158,41 @@ where
 
     pub fn data_dim(&self) -> usize {
         return self.data_dim;
+    }
+
+    fn swap(&mut self, a: usize, b: usize) {
+        if a == b {
+            return;
+        }
+        unsafe {
+            ptr::swap_nonoverlapping(
+                &mut self.data[a * self.node_size],
+                &mut self.data[b * self.node_size],
+                self.node_size,
+            );
+        }
+    }
+
+    pub fn reorder(&mut self, perm: Vec<usize>) {
+        // perm[n] = i means that node n is moved to pos i
+
+        for node in 0..self.len() {
+            for nbr in self.nbrs_mut(node) {
+                *nbr = NbrT::from_usize(perm[nbr.as_()]).expect("cast error");
+            }
+        }
+
+        let mut visited = vec![false; self.len()];
+
+        for src in 0..self.len() {
+            let mut dest = perm[src];
+
+            while !visited[dest] {
+                self.swap(src, dest);
+                visited[dest] = true;
+                dest = perm[dest];
+            }
+        }
     }
 }
 

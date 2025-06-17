@@ -4,13 +4,30 @@ use numpy::{PyReadonlyArray1, PyUntypedArrayMethods};
 use pyo3::{exceptions, prelude::*};
 use pyo3::{pymodule, types::PyModule, Bound, PyResult};
 
-#[pyclass(name = "IndexEuclideanF32")]
-struct PyIndexEuclideanF32 {
+#[pyclass(subclass)]
+struct Reordering(Box<dyn flatnav::Reordering + Send + Sync>);
+
+#[pyclass(extends = Reordering, subclass)]
+struct GOrder {}
+
+#[pymethods]
+impl GOrder {
+    #[new]
+    fn new(w: usize) -> (Self, Reordering) {
+        (
+            Self {},
+            Reordering(Box::new(flatnav::reordering::GOrder::new(w))),
+        )
+    }
+}
+
+#[pyclass]
+struct IndexEuclideanF32 {
     index: flatnav::IndexEuclideanF32,
 }
 
 #[pymethods]
-impl PyIndexEuclideanF32 {
+impl IndexEuclideanF32 {
     #[new]
     fn new(max_nbrs: usize, data_dim: usize, capacity: usize) -> PyResult<Self> {
         Ok(Self {
@@ -59,6 +76,10 @@ impl PyIndexEuclideanF32 {
         Ok(results)
     }
 
+    fn reorder(&mut self, reordering: &Reordering) {
+        self.index.reorder(&*reordering.0);
+    }
+
     fn __len__(&self) -> usize {
         self.index.len()
     }
@@ -66,7 +87,10 @@ impl PyIndexEuclideanF32 {
 
 #[pymodule(name = "flatnav")]
 fn flatnav_lib(m: &Bound<'_, PyModule>) -> PyResult<()> {
-    m.add_class::<PyIndexEuclideanF32>()?;
+    m.add_class::<Reordering>()?;
+    m.add_class::<GOrder>()?;
+
+    m.add_class::<IndexEuclideanF32>()?;
 
     Ok(())
 }
