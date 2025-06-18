@@ -25,6 +25,8 @@ def main():
     for i, sample in tqdm.tqdm(enumerate(train), total=len(train)):
         index.insert(i, sample, 64)
 
+    index.reorder(flatnav.GOrder(w=10))
+
     tp = 0
     fp = 0
     fn = 0
