@@ -126,12 +126,15 @@ impl Reordering for GOrder {
             }
         }
 
-        let mut node_to_idx = vec![0; out_nodes.len()];
+        // perm[i] = n means that node n goes to position i. Inverting it means
+        // that perm_inv[n] = i means that node n goes to position i which allows
+        // for easy lookup for mapping nodes
+        let mut perm_inv = vec![0; out_nodes.len()];
         for (i, &node) in perm.iter().enumerate() {
-            node_to_idx[node] = i;
+            perm_inv[node] = i;
         }
 
-        return node_to_idx;
+        return perm_inv;
     }
 }
 
