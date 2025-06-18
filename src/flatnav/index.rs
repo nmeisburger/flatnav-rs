@@ -228,7 +228,7 @@ where
 
         let perm = reordering.reorder(&out_nodes);
 
-        self.graph.reorder(perm);
+        self.graph.reorder(&perm);
     }
 
     pub fn len(&self) -> usize {

@@ -6,7 +6,11 @@ pub type LabelT = u64;
 // [Label 1][Neighbors 1][Data 1][Label 2][Neighbors 2][Data 2]...
 pub struct InMemStorage<NbrT, DataT>
 where
-    NbrT: Copy + num_traits::AsPrimitive<usize> + num_traits::FromPrimitive,
+    NbrT: Copy
+        + num_traits::AsPrimitive<usize>
+        + num_traits::FromPrimitive
+        + num_traits::Bounded
+        + std::cmp::PartialEq,
     DataT: Copy,
 {
     n_nodes: usize,
@@ -22,7 +26,11 @@ where
 
 impl<NbrT, DataT> InMemStorage<NbrT, DataT>
 where
-    NbrT: Copy + num_traits::AsPrimitive<usize> + num_traits::FromPrimitive,
+    NbrT: Copy
+        + num_traits::AsPrimitive<usize>
+        + num_traits::FromPrimitive
+        + num_traits::Bounded
+        + std::cmp::PartialEq,
     DataT: Copy,
 {
     pub fn new(max_nbrs: usize, data_dim: usize, capacity: usize) -> Self {
@@ -173,12 +181,14 @@ where
         }
     }
 
-    pub fn reorder(&mut self, perm: Vec<usize>) {
+    pub fn reorder(&mut self, perm: &[usize]) {
         // perm[n] = i means that node n is moved to pos i
 
         for node in 0..self.len() {
             for nbr in self.nbrs_mut(node) {
-                *nbr = NbrT::from_usize(perm[nbr.as_()]).expect("cast error");
+                if *nbr != NbrT::max_value() {
+                    *nbr = NbrT::from_usize(perm[nbr.as_()]).expect("cast error");
+                }
             }
         }
 
@@ -261,6 +271,41 @@ mod tests {
             assert_eq!(storage.label(i), label as u64);
             assert_eq!(storage.nbrs(i), &nbrs);
             assert_eq!(storage.data(i), &data);
+        }
+    }
+
+    #[test]
+    fn test_storage_reorder() {
+        const MAX_NBRS: usize = 3;
+        const DATA_DIM: usize = 2;
+        const N_NODES: usize = 6;
+        let mut storage = InMemStorage::<i8, u16>::new(MAX_NBRS, DATA_DIM, N_NODES);
+
+        for i in 0..N_NODES {
+            let nbrs: Vec<_> = (i..i + MAX_NBRS).map(|x| (x % N_NODES) as i8).collect();
+            let data = vec![i as u16, (i + 1) as u16];
+            storage.add_node(i as u64, &nbrs, &data);
+        }
+
+        let perm = vec![4, 5, 2, 0, 3, 1];
+
+        storage.reorder(&perm);
+
+        let mut perm_inv = vec![0; N_NODES];
+        for (i, &p) in perm.iter().enumerate() {
+            perm_inv[p] = i;
+        }
+
+        for i in 0..N_NODES {
+            let orig = perm_inv[i];
+            assert_eq!(storage.label(i), orig as u64);
+            assert_eq!(storage.data(i), &[orig as u16, (orig + 1) as u16]);
+            assert_eq!(
+                storage.nbrs(i),
+                (orig..orig + MAX_NBRS)
+                    .map(|x| perm[x % N_NODES] as i8)
+                    .collect::<Vec<_>>()
+            )
         }
     }
 }
