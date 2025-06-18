@@ -27,7 +27,11 @@ impl PriorityQueue {
         self.node_to_score.insert(node, new_score);
 
         if let Some(nodes) = self.scores.get_mut(&score) {
-            nodes.remove(&node);
+            if nodes.len() == 1 {
+                self.scores.remove(&score);
+            } else {
+                nodes.remove(&node);
+            }
         } else {
             panic!("scores does not contain entry for old score")
         }
@@ -197,5 +201,16 @@ mod tests {
         for i in 0..100 {
             assert!(popped.contains(&i));
         }
+    }
+
+    #[test]
+    fn test_gorder() {
+        let out_nodes = vec![vec![1, 2], vec![0], vec![4], vec![1, 2], vec![]];
+
+        let gorder = GOrder::new(2);
+
+        let perm = gorder.reorder(&out_nodes);
+
+        assert_eq!(perm, vec![0, 1, 2, 3, 4]);
     }
 }
