@@ -242,8 +242,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::super::distance::EuclideanDistance;
     use super::*;
+    use crate::flatnav::distance::EuclideanDistance;
+    use crate::flatnav::reordering;
     use rand::Rng;
 
     #[test]
@@ -274,6 +275,15 @@ mod tests {
         for (idx, (data, _)) in dataset.iter().enumerate() {
             index.insert(idx as u64, data, 16);
         }
+
+        for (idx, (_, query)) in dataset.iter().take(4).enumerate() {
+            let results = index.query(query, 16, 5);
+            assert!(!results.is_empty(), "Query {} returned no results", idx);
+            assert_eq!(results[0].0, idx as u64);
+        }
+
+        let gorder = reordering::GOrder::new(10);
+        index.reorder(&gorder);
 
         for (idx, (_, query)) in dataset.iter().take(4).enumerate() {
             let results = index.query(query, 16, 5);
